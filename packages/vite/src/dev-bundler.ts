@@ -73,7 +73,7 @@ async function transformRequest (opts: TransformOptions, id: string) {
 
   if (await isExternal(opts, id)) {
     return {
-      code: `(global, exports, importMeta, ssrImport, ssrDynamicImport, ssrExportAll) => import('${(pathToFileURL(id))}').then(r => { exports.default = r.default; ssrExportAll(r) }).catch(e => { console.error(e); throw new Error('[vite dev] Error loading external "${id}".') })`,
+      code: `(global, exports, importMeta, ssrImport, ssrDynamicImport, ssrExportAll) => import(${JSON.stringify((pathToFileURL(id)))}).then(r => { exports.default = r.default; ssrExportAll(r) }).catch(e => { console.error(e); throw new Error('[vite dev] Error loading external "${id}".') })`,
       deps: [],
       dynamicDeps: []
     }

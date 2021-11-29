@@ -229,6 +229,6 @@ export function addComponentToRoutes (routes: NuxtRoute[]) {
   return routes.map(route => ({
     ...route,
     children: route.children ? addComponentToRoutes(route.children) : [],
-    component: `{() => import('${route.file}')}`
+    component: `{() => import(${JSON.stringify(route.file)})}`
   }))
 }

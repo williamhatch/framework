@@ -3,6 +3,7 @@ import { existsSync } from 'fs'
 import { resolve } from 'pathe'
 import * as vite from 'vite'
 import { ExternalsOptions, isExternal as _isExternal, ExternalsDefaults } from 'externality'
+import { genDynamicImport, genObjectFromRawEntries } from 'mlly'
 import { hashId } from './utils'
 
 export interface TransformChunk {
@@ -73,7 +74,7 @@ async function transformRequest (opts: TransformOptions, id: string) {
 
   if (await isExternal(opts, id)) {
     return {
-      code: `(global, exports, importMeta, ssrImport, ssrDynamicImport, ssrExportAll) => import(${JSON.stringify((pathToFileURL(id)))}).then(r => { exports.default = r.default; ssrExportAll(r) }).catch(e => { console.error(e); throw new Error(${JSON.stringify(`[vite dev] Error loading external "${id}".`)}) })`,
+      code: `(global, exports, importMeta, ssrImport, ssrDynamicImport, ssrExportAll) => ${genDynamicImport(pathToFileURL(id).toString(), { wrapper: false })}.then(r => { exports.default = r.default; ssrExportAll(r) }).catch(e => { console.error(e); throw new Error(${JSON.stringify(`[vite dev] Error loading external "${id}".`)}) })`,
       deps: [],
       dynamicDeps: []
     }
@@ -146,8 +147,9 @@ export async function bundleRequest (opts: TransformOptions, entryURL: string) {
 const ${hashId(chunk.id)} = ${chunk.code}
 `).join('\n')
 
-  const manifestCode = 'const __modules__ = {\n' +
-   chunks.map(chunk => ` ${JSON.stringify(chunk.id)}: ${hashId(chunk.id)}`).join(',\n') + '\n}'
+  const manifestCode = `const __modules__ = ${
+    genObjectFromRawEntries(chunks.map(chunk => [chunk.id, hashId(chunk.id)]))
+  }`
 
   // https://github.com/vitejs/vite/blob/main/packages/vite/src/node/ssr/ssrModuleLoader.ts
   const ssrModuleLoader = `

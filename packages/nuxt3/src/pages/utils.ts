@@ -3,6 +3,7 @@ import { encodePath } from 'ufo'
 import type { Nuxt, NuxtRoute } from '@nuxt/schema'
 import { resolveFiles } from '@nuxt/kit'
 import { kebabCase } from 'scule'
+import { genDynamicImport, genArrayFromRaw } from 'mlly'
 
 enum SegmentParserState {
   initial,
@@ -226,9 +227,9 @@ export async function resolveLayouts (nuxt: Nuxt) {
 }
 
 export function addComponentToRoutes (routes: NuxtRoute[]) {
-  return routes.map(route => ({
-    ...route,
+  return genArrayFromRaw(routes.map(route => ({
+    ...Object.fromEntries(Object.entries(route).map(([key, value]) => [key, JSON.stringify(value)])),
     children: route.children ? addComponentToRoutes(route.children) : [],
-    component: `{() => import(${JSON.stringify(route.file)})}`
-  }))
+    component: genDynamicImport(route.file)
+  })))
 }
